@@ -8,16 +8,20 @@ export async function getAvailableSlots(dateStr: string, serviceId: string) {
 
   // 1. Récupérer les paramètres
   const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  if (!service) return []; // SÉCURITÉ : Si le service n'existe pas, on arrête
+
   const practitioner = await prisma.practitioner.findFirst();
   if (!practitioner) return [];
 
-  const workingHours = await prisma.availability.findFirst({ 
-    where: { 
-      dayOfWeek, 
-      isActive: true,
-      practitionerId: practitioner.id
-    } 
-  });
+  const workingHours = await prisma.availability.findFirst({
+     where: {
+       dayOfWeek,
+       isActive: true,
+       practitionerId: practitioner.id
+     }
+   });
+   
+  if (!workingHours) return []; // SÉCURITÉ : Si Amira ne travaille pas ce jour-là, on arrête
 
   // 2. Calculer le début et la fin de la journée en objets Date
   const [startHour, startMin] = workingHours.startTime.split(":").map(Number);
