@@ -17,6 +17,7 @@ export async function sendClientConfirmation(appointment: any, service: any) {
       from: SENDER_EMAIL,
       to: appointment.clientEmail,
       subject: 'Confirmation de votre séance de Cupping Therapy',
+      replyTo: ADMIN_EMAIL,
       react: ClientConfirmationEmail({ appointment, service }),
     });
     return { success: true };
@@ -52,6 +53,7 @@ export async function sendCancellation(appointment: any, service: any, cancelled
       from: SENDER_EMAIL,
       to: recipient,
       subject: subject,
+      replyTo: ADMIN_EMAIL,
       react: CancellationEmail({ appointment, service, cancelledBy }),
     });
     return { success: true };
@@ -66,6 +68,7 @@ export async function sendReminderEmail(appointment: any, service: any) {
       from: SENDER_EMAIL,
       to: appointment.clientEmail,
       subject: 'Rappel de votre séance de Cupping Therapy',
+      replyTo: ADMIN_EMAIL,
       react: ClientConfirmationEmail({ appointment, service }), // On réutilise le template pour l'instant
     });
     return { success: true };
