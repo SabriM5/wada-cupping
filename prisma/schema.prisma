@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// 1. UTILISATEURS & PROFILS
+// ==========================================
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum PaymentStatus {
+  UNPAID         // Réservation initiée mais paiement non finalisé
+  DEPOSIT_PAID   // Acompte payé (RDV confirmé)
+  FULLY_PAID     // Payé en totalité
+  REFUNDED       // Remboursé
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  customerProfile CustomerProfile?
+  practitioner    Practitioner?
+  notifications   Notification[]
+  reviews         Review[]
+  appointments    Appointment[]    // Historique global lié au compte
+}
+
+model CustomerProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  phone     String?
+  address   String?
+  city      String?
+  zipCode   String?
+  
+  visitsCount Int    @default(0) 
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  referralCode String  @unique @default(uuid()) // Le code unique de ce client à partager
+  referredById String? // S'il a été parrainé, l'ID de son parrain
+  referredBy   CustomerProfile?  @relation("Referrals", fields: [referredById], references: [id])
+  referrals    CustomerProfile[] @relation("Referrals")
+}
+
+model Practitioner {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  bio       String?
+  phone     String
+  
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  availabilities Availability[]
+  blockedSlots   BlockedSlot[]
+}
+
+// ==========================================
+// 2. PRESTATIONS & RÉSERVATIONS
+// ==========================================
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  durationMin Int      // Durée de la prestation seule
+  bufferMin   Int      @default(30) // Temps de trajet/préparation
+  price       Float
+  isActive    Boolean  @default(true) // Permet de désactiver sans supprimer l'historique
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  appointments Appointment[] // onDelete: Restrict (interdit de supprimer un service ayant des RDV)
+  reviews      Review[]
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  startsAt        DateTime          // Heure de début UTC
+  endsAt          DateTime          // Heure de fin UTC (startsAt + durationMin)
+  status          AppointmentStatus @default(PENDING)
+  
+  // Snapshots des coordonnées au moment de la réservation (Immuabilité)
+  snapshotAddress String
+  snapshotPhone   String
+  notes           String?
+  cancelReason    String?
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // payement
+  paymentStatus    PaymentStatus @default(UNPAID)
+  stripeSessionId  String?       @unique // Pour retrouver la transaction
+  amountPaid       Float         @default(0)
+
+  // Relations
+  serviceId       String
+  service         Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  
+  userId          String?           // Nullable si on autorise les réservations "Guest"
+  user            User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([startsAt, endsAt])
+  @@index([status])
+}
+
+// ==========================================
+// 3. CALENDRIER & DISPONIBILITÉS
+// ==========================================
+
+model Availability {
+  id             String       @id @default(uuid())
+  dayOfWeek      Int          // 0 = Dimanche, 1 = Lundi...
+  startTime      String       // Format HH:mm
+  endTime        String       // Format HH:mm
+  isActive       Boolean      @default(true)
+
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@unique([practitionerId, dayOfWeek]) // Un seul set d'horaires par jour et par praticien
+}
+
+model BlockedSlot {
+  id             String       @id @default(uuid())
+  startsAt       DateTime
+  endsAt         DateTime
+  reason         String?
+
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@index([startsAt, endsAt])
+}
+
+// ==========================================
+// 4. INTERACTIONS & SITE
+// ==========================================
+
+model Review {
+  id          String   @id @default(uuid())
+  rating      Int      // 1 à 5
+  comment     String?
+  isPublished Boolean  @default(false) // Modération avant publication
+  createdAt   DateTime @default(now())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // Ex: 'APPOINTMENT_REMINDER', 'NEW_MESSAGE'
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SiteSettings {
+  id          String   @id @default(uuid())
+  key         String   @unique // Ex: 'MAINTENANCE_MODE', 'MAX_BOOKING_DAYS'
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model PromoCode {
+  id              String    @id @default(uuid())
+  code            String    @unique // Ex: LANCEMENT20
+  discountPercent Int       // Ex: 20 pour 20%
+  isActive        Boolean   @default(true)
+  expiresAt       DateTime? // Optionnel : Date de fin de la promo
+  createdAt       DateTime  @default(now())
+}
+
+model SystemSettings {
+  id                     String @id @default("global")
+  loyaltyVisitsRequired  Int    @default(5)
+  loyaltyRewardDesc      String @default("-50% sur votre soin")
+  referralRewardReferrer String @default("10€ offerts sur le prochain soin")
+  referralRewardReferred String @default("10€ de réduction immédiate")
+  
+  cancellationNoticeHours    Int @default(24)
+  cancellationPenaltyPercent Int @default(20)
+}

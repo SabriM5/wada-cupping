@@ -1,26 +1,54 @@
-@import "tailwindcss";
+@import "tailwindcss"; 
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* 1. Importation de la police (Vérifie si c'est .ttf ou .otf) */
+@font-face {
+  font-family: 'TanNimbus';
+  src: url('/fonts/tan-nimbus.otf') format('opentype'); /* <-- Mets .ttf et truetype si c'est un ttf */
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  /* Palette Monochrome Luxe WADA (Garde tes couleurs actuelles) */
+  --color-primary: #1A1A1A;    
+  --color-secondary: #8C8C8C;  
+  --color-background: #F9F9F6; 
+  --color-surface: #FFFFFF;    
+  --color-text: #1A1A1A;       
+  --color-muted: #666666;      
+  --color-border: #EAEAe5;     
+
+  /* 2. Ajout de Tan Nimbus au moteur Tailwind */
+  --font-heading: var(--font-playfair), serif;
+  --font-body: var(--font-montserrat), sans-serif;
+  --font-nimbus: 'TanNimbus', serif; /* <-- NOUVELLE LIGNE ICI */
+
+  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.08); 
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Styles de base */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  /* Rend les polices plus fines et élégantes sur les écrans (surtout Apple) */
+  -webkit-font-smoothing: antialiased; 
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animations fluides pour l'apparition des éléments */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
 }
