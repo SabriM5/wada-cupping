@@ -37,7 +37,7 @@ export default function Footer() {
               Rejoignez notre communauté. 
               Envoyez nous un message.
             </p>
-            <a href="[https://instagram.com/wada_cupping](https://instagram.com/wada_cupping)" target="_blank" rel="noopener noreferrer" className="inline-block hover:scale-110 transition-transform">
+            <a href="https://instagram.com/wada_cupping" target="_blank" rel="noopener noreferrer" className="inline-block hover:scale-110 transition-transform">
               <div className="bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white p-3 rounded-2xl shadow-md flex items-center justify-center">
                 {/* Code SVG natif du logo Instagram (Plus besoin d'import) */}
                 <svg 
