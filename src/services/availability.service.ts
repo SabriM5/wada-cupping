@@ -1,14 +1,33 @@
-// src/services/availability.service.ts
 import prisma from "@/lib/prisma";
-import { addMinutes, isBefore, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { addMinutes, isBefore, startOfDay, endOfDay } from "date-fns";
+
+// 1. LA SOLUTION : Cette fonction force le calcul sur le fuseau de Paris
+function createParisDate(dateStr: string, timeStr: string) {
+  // On crée la date en heure universelle (Z)
+  const dateUTC = new Date(`${dateStr}T${timeStr}:00Z`);
+  
+  // On demande à Javascript le décalage exact de Paris à cette date (Été = +2h, Hiver = +1h)
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Paris',
+    hour: 'numeric',
+    hourCycle: 'h23'
+  });
+  
+  const parts = formatter.formatToParts(new Date(`${dateStr}T12:00:00Z`));
+  const parisHour = parseInt(parts.find(p => p.type === 'hour')?.value || "12");
+  const offset = parisHour - 12; 
+  
+  // On soustrait ce décalage pour que le navigateur du client affiche la bonne heure
+  dateUTC.setUTCHours(dateUTC.getUTCHours() - offset);
+  return dateUTC;
+}
 
 export async function getAvailableSlots(dateStr: string, serviceId: string) {
-  const targetDate = new Date(dateStr); // Ex: "2026-09-15"
+  const targetDate = new Date(dateStr); 
   const dayOfWeek = targetDate.getDay();
 
-  // 1. Récupérer les paramètres
   const service = await prisma.service.findUnique({ where: { id: serviceId } });
-  if (!service) return []; // SÉCURITÉ : Si le service n'existe pas, on arrête
+  if (!service) return []; 
 
   const practitioner = await prisma.practitioner.findFirst();
   if (!practitioner) return [];
@@ -21,26 +40,19 @@ export async function getAvailableSlots(dateStr: string, serviceId: string) {
      }
    });
    
-  if (!workingHours) return []; // SÉCURITÉ : Si Amira ne travaille pas ce jour-là, on arrête
+  if (!workingHours) return []; 
 
-  // 2. Calculer le début et la fin de la journée en objets Date
-  const [startHour, startMin] = workingHours.startTime.split(":").map(Number);
-  const [endHour, endMin] = workingHours.endTime.split(":").map(Number);
-  
-  let currentSlot = new Date(targetDate);
-  currentSlot.setHours(startHour, startMin, 0, 0);
-  
-  const endOfDayLimit = new Date(targetDate);
-  endOfDayLimit.setHours(endHour, endMin, 0, 0);
+  // 2. ON UTILISE LA FONCTION POUR LE DÉBUT ET LA FIN
+  let currentSlot = createParisDate(dateStr, workingHours.startTime);
+  const endOfDayLimit = createParisDate(dateStr, workingHours.endTime);
 
-  // 3. Récupérer tout ce qui bloque sur cette journée
   const startOfTargetDay = startOfDay(targetDate);
   const endOfTargetDay = endOfDay(targetDate);
-
+  
   const existingAppointments = await prisma.appointment.findMany({
     where: {
       startsAt: { gte: startOfTargetDay, lte: endOfTargetDay },
-      status: { not: "CANCELLED" } // On ignore les RDV annulés
+      status: { not: "CANCELLED" }
     }
   });
 
@@ -48,25 +60,21 @@ export async function getAvailableSlots(dateStr: string, serviceId: string) {
     where: { startsAt: { gte: startOfTargetDay, lte: endOfTargetDay } }
   });
 
-  // 4. Générer les créneaux
   const availableSlots: Date[] = [];
   const now = new Date();
 
   while (isBefore(currentSlot, endOfDayLimit)) {
     const slotEnd = addMinutes(currentSlot, service.durationMin);
-    const slotEndWithBuffer = addMinutes(slotEnd, service.bufferMin); // Temps de trajet
+    const slotEndWithBuffer = addMinutes(slotEnd, service.bufferMin); 
 
-    if (isBefore(endOfDayLimit, slotEnd)) break; // Dépasse l'heure de fin
+    if (isBefore(endOfDayLimit, slotEnd)) break; 
 
-    // Vérifier si la date est passée
     if (isBefore(currentSlot, now)) {
       currentSlot = addMinutes(currentSlot, 15);
       continue;
     }
 
-    // Fonction utilitaire pour vérifier les chevauchements
     const isOverlapping = (events: any[]) => events.some(event => {
-       // On vérifie si notre créneau + trajet empiète sur un événement existant
        return (
          (currentSlot >= event.startsAt && currentSlot < event.endsAt) ||
          (slotEndWithBuffer > event.startsAt && slotEndWithBuffer <= event.endsAt) ||
@@ -78,7 +86,6 @@ export async function getAvailableSlots(dateStr: string, serviceId: string) {
       availableSlots.push(new Date(currentSlot));
     }
 
-    // Avancer par pas de 30 minutes
     currentSlot = addMinutes(currentSlot, 30);
   }
 
