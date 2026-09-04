@@ -3,15 +3,15 @@ import Image from "next/image";
 import prisma from "@/lib/prisma";
 
 export default async function Services() {
-  // 1. On récupère les soins actifs en temps réel depuis la base de données
   const dbServices = await prisma.service.findMany({
     where: { isActive: true }
   });
 
-  // 2. On garde ton design éditorial, lié à la BDD grâce au "keyword"
+  // Ajout de la propriété "anchor" qui correspond exactement à ton Header.tsx
   const RITUELS_VISUELS = [
     {
-      keyword: "compression", // Cherchera le "Rituel Décompression" en base
+      keyword: "compression",
+      anchor: "decompression", 
       title: "Rituel Décompression & Récupération",
       description: "Dédié aux tensions musculaires profondes accumulées avec le stress, les postures du quotidien ou la pratique sportive. Le travail ciblé des ventouses libère les nœuds et débloque la chaîne postérieure.",
       bullets: [
@@ -24,7 +24,8 @@ export default async function Services() {
       img: "/images/page5-service1.webp"
     },
     {
-      keyword: "minit", // Cherchera le "Rituel Féminité"
+      keyword: "minit",
+      anchor: "feminite",
       title: "Rituel Féminité, Équilibre & Confort Pelvien",
       description: "Un accompagnement doux, chaleureux et libérateur dédié au bien-être gynécologique, au transit et à l'harmonie du cycle féminin.",
       bullets: [
@@ -37,7 +38,8 @@ export default async function Services() {
       img: "/images/page5-service2.webp"
     },
     {
-      keyword: "glow", // Cherchera le "Rituel Glow"
+      keyword: "glow",
+      anchor: "glow-lift",
       title: "Rituel Glow & Lift Facial",
       description: "Un soin d'exception réalisé avec des mini-ventouses en verre médical de haute précision, combinant stimulation cutanée et drainage doux.",
       bullets: [
@@ -50,7 +52,8 @@ export default async function Services() {
       img: "/images/page5-service3.webp"
     },
     {
-      keyword: "mesure", // Cherchera le "Sur-Mesure"
+      keyword: "mesure",
+      anchor: "sur-mesure",
       title: "L'Expérience Sur-Mesure Haut de Gamme",
       description: "La combinaison sur-mesure de deux rituels complets lors d'une même séance pour une prise en charge globale du corps (ex. Dos, Nuque & Migraines + Confort Pelvien).",
       bullets: [
@@ -74,17 +77,13 @@ export default async function Services() {
 
         <div className="space-y-16">
           {RITUELS_VISUELS.map((rituel) => {
-            
-            // 3. LA CONNEXION MAGIQUE : On lie le visuel aux données de l'Admin
             const dbService = dbServices.find(s => s.name.toLowerCase().includes(rituel.keyword.toLowerCase()));
             
-            // Si le soin a été désactivé ou supprimé par l'Admin, il disparaît du site public automatiquement
             if (!dbService) return null;
 
             return (
-              <div key={dbService.id} id={dbService.id} className="scroll-mt-32 group">
+              <div key={dbService.id} id={rituel.anchor} className="scroll-mt-32 group">
                 
-                {/* En-tête : Titre, Prix Dynamique et Bouton connecté */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-primary/20 pb-6 mb-8">
                   <div className="md:w-2/3">
                     <h3 className="font-heading text-3xl md:text-4xl text-primary font-bold mb-2 group-hover:text-secondary transition-colors">
@@ -104,7 +103,6 @@ export default async function Services() {
                   </div>
                 </div>
 
-                {/* Description et Liste d'avantages */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                   <div className="lg:col-span-5 relative h-[300px] lg:h-auto rounded-[30px] overflow-hidden">
                     <Image src={rituel.img} alt={rituel.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
