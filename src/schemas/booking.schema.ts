@@ -16,6 +16,7 @@ export const BookingSchema = z.object({
     message: "Vous devez accepter les conditions pour la réservation",
   }),
   stripeIntentId: z.string().optional(),
+  promoCodeUsed: z.string().optional(),
 });
 
 export type BookingFormData = z.infer<typeof BookingSchema>;

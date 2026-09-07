@@ -30,9 +30,10 @@ export default function ClientConfirmationEmail({ appointment, service }: EmailP
           </Section>
 
           {/* LA RÈGLE D'ANNULATION CLAIREMENT ÉCRITE */}
+          {/* LA RÈGLE D'ANNULATION DYNAMIQUE */}
           <Section style={warningCard}>
             <Text style={warningText}>
-              <strong>Politique d'annulation :</strong> En cas d'imprévu, vous pouvez annuler ou reporter votre séance sans frais jusqu'à 24h avant. <strong>Toute annulation à moins de 24h du rendez-vous entraînera automatiquement un prélèvement de 20%</strong> du montant du soin via votre empreinte bancaire.
+              <strong>Politique d'annulation :</strong> En cas d'imprévu, vous pouvez annuler ou reporter votre séance sans frais jusqu'à {appointment.cancelHours}h avant. <strong>Toute annulation à moins de {appointment.cancelHours}h du rendez-vous entraînera automatiquement un prélèvement de {appointment.cancelPenalty}%</strong> du montant du soin via votre empreinte bancaire.
             </Text>
           </Section>
 

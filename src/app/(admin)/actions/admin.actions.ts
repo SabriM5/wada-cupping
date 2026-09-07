@@ -59,6 +59,7 @@ export async function createPromoCode(formData: FormData) {
     data: { code: code.toUpperCase().trim(), discountPercent: discount, isActive: true }
   });
   revalidatePath("/admin/promotions");
+  revalidatePath("/", "layout");
 }
 
 // --- ACTION 3 : ACTIVER/DÉSACTIVER UN CODE ---
@@ -73,9 +74,9 @@ export async function togglePromoStatus(id: string, currentStatus: boolean) {
     data: { isActive: !currentStatus }
   });
   revalidatePath("/admin/promotions");
+  revalidatePath("/", "layout");
 }
 
-// --- ACTION 4 : PARAMÈTRES MARKETING ---
 // --- ACTION 4 : PARAMÈTRES MARKETING & ANNULATION ---
 export async function updateMarketingSettings(formData: FormData) {
   const session = await auth();
@@ -115,5 +116,6 @@ export async function updateMarketingSettings(formData: FormData) {
   });
   
   revalidatePath("/admin/parametres");
+  revalidatePath("/", "layout");
   redirect("/admin/parametres?success=marketing");
 }

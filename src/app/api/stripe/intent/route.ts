@@ -22,6 +22,9 @@ export async function POST(request: Request) {
       if (promoCode === "FIDELITE") {
         const matchLoyalty = settings?.loyaltyRewardDesc?.match(/\d+/);
         discountPercent = matchLoyalty ? parseInt(matchLoyalty[0]) : 50;
+      } else if (promoCode === "RECOMPENSE") {
+        const matchReward = settings?.referralRewardReferrer?.match(/\d+/);
+        discountPercent = matchReward ? parseInt(matchReward[0]) : 10;
       } else {
         const promo = await prisma.promoCode.findUnique({ where: { code: promoCode } });
         if (promo && promo.isActive) {

@@ -138,15 +138,13 @@ const [appliedPromo, setAppliedPromo] = useState<{ code?: string, discount?: num
 
   const finalizeBooking = async () => {
     const data = form.getValues();
-    
-    // NOUVEAU : On extrait l'ID de la transaction (ex: pi_12345) depuis le secret Stripe
     const intentId = clientSecret?.split('_secret_')[0]; 
 
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, stripeIntentId: intentId }), // On l'ajoute ici
+        body: JSON.stringify({ ...data, stripeIntentId: intentId, promoCodeUsed: appliedPromo?.code || null }),
       });
       const json = await res.json();
       if (json.success) setSuccess(true);

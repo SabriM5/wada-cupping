@@ -16,8 +16,7 @@ export async function POST(request: Request) {
     
     // 1. Validation stricte
     const validatedData = BookingSchema.parse(body);
-    const { serviceId, startsAt, clientName, clientEmail, clientPhone, clientAddress, clientCity, clientZipCode, stripeIntentId } = validatedData;
-    
+    const { serviceId, startsAt, clientName, clientEmail, clientPhone, clientAddress, clientCity, clientZipCode, stripeIntentId, promoCodeUsed } = validatedData;    
     // --- NOUVEAU : VÉRIFICATION DE SÉCURITÉ STRIPE ---
     if (!stripeIntentId) {
       throw new Error("Transaction bancaire manquante ou invalide.");
@@ -82,22 +81,58 @@ export async function POST(request: Request) {
         });
       }
 
-      return await tx.appointment.create({
-        data: {
-          startsAt: requestedStart,
-          endsAt: requestedEnd,
-          serviceId: serviceId,
-          userId: user.id,
-          snapshotAddress: fullAddress,
-          snapshotPhone: clientPhone,
-        }
-      });
-    });
+      const appointment = await tx.appointment.create({
+     data: {
+       startsAt: requestedStart,
+       endsAt: requestedEnd,
+       serviceId: serviceId,
+       userId: user.id,
+       snapshotAddress: fullAddress,
+       snapshotPhone: clientPhone,
+       promoCodeUsed: promoCodeUsed || null
+     }
+   });
+
+   // --- NOUVEAU : GESTION DES CAGNOTTES ---
+   if (promoCodeUsed) {
+     if (promoCodeUsed === "RECOMPENSE") {
+       // Le parrain utilise sa cagnotte : on lui retire 1 point
+       await tx.customerProfile.update({
+         where: { userId: user.id },
+         data: { referralRewards: { decrement: 1 } }
+       });
+     } else if (promoCodeUsed !== "FIDELITE" && promoCodeUsed !== "LANCEMENT" && promoCodeUsed !== "BIENVENUE") {
+       // C'est un code parrain (ex: AMIRA8X) : on cherche le parrain
+       const referrer = await tx.customerProfile.findFirst({
+         where: { referralCode: { startsWith: promoCodeUsed, mode: "insensitive" } }
+       });
+       // On crédite le parrain de 1 point (s'il ne s'auto-parraine pas)
+       if (referrer && referrer.userId !== user.id) {
+         await tx.customerProfile.update({
+           where: { id: referrer.id },
+           data: { referralRewards: { increment: 1 } }
+         });
+       }
+     }
+   }
+
+   return appointment;
+});
 
     // 3. Envoi des Emails en arrière-plan (ne bloque pas la réponse)
+    // 3. Envoi des Emails en arrière-plan
     try {
-      // On regroupe les infos utiles pour les templates
-      const emailData = { startsAt, clientName, clientEmail, clientAddress: fullAddress };      await sendClientConfirmation(emailData, service);
+      const settings = await prisma.systemSettings.findUnique({ where: { id: "global" } });
+      const emailData = { 
+        startsAt, 
+        clientName, 
+        clientEmail, 
+        clientAddress: fullAddress,
+        cancelHours: settings?.cancellationNoticeHours || 24,
+        cancelPenalty: settings?.cancellationPenaltyPercent || 20
+      };
+      
+      await sendClientConfirmation(emailData, service);
       await sendAdminNotification(emailData, service);
     } catch (emailError) {
       console.error("Échec de l'envoi des emails :", emailError);
