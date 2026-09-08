@@ -13,12 +13,14 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripeCheckout from "./StripeCheckout";
 
+// Initialisation Stripe Front-end
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function BookingForm({ services }: { services: any[] }) {
   const searchParams = useSearchParams();
   const isBankRedirectSuccess = searchParams.get("success") === "true";
 
+  // 1. TOUTES LES VARIABLES D'ÉTAT (useState) EN PREMIER
   const [step, setStep] = useState(1);
   const [availableSlots, setAvailableSlots] = useState<Date[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -29,39 +31,48 @@ export default function BookingForm({ services }: { services: any[] }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [clientSecretType, setClientSecretType] = useState<"payment" | "setup">("payment");
   const [paymentChoice, setPaymentChoice] = useState<"full" | "hold">("full");
+  const [isCure, setIsCure] = useState(false);
 
   const [promoInput, setPromoInput] = useState("");
-const [appliedPromo, setAppliedPromo] = useState<{ code?: string, discount?: number, message: string, type: string } | null>(null);  const [promoStatusMsg, setPromoStatusMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{ code?: string, discount?: number, message: string, type: string } | null>(null);
+  const [promoStatusMsg, setPromoStatusMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
   
   const [selectedDate, setSelectedDate] = useState<string>(
     format(addDays(new Date(), 1), "yyyy-MM-dd")
   );
-
   const [cancelRules, setCancelRules] = useState({ hours: 24, penalty: 20 });
+
+  // 2. INITIALISATION DU FORMULAIRE
+  const form = useForm<BookingFormData>({
+    resolver: zodResolver(BookingSchema),
+    defaultValues: { termsAccepted: true, isCure: false },
+  });
+
+  const watchServiceId = form.watch("serviceId");
+  const watchStartsAt = form.watch("startsAt");
+
+  // 3. CALCULS DÉRIVÉS (Maintenant que toutes les variables existent)
+  const selectedService = services.find((s) => s.id === watchServiceId);
+  
+  const basePrice = selectedService 
+    ? (isCure && selectedService.curePrice ? selectedService.curePrice : selectedService.price) 
+    : 0;
+    
+  const finalPrice = basePrice 
+    ? (appliedPromo?.discount ? basePrice - (basePrice * appliedPromo.discount / 100) : basePrice) 
+    : 0;
+    
+  const penaltyAmount = (finalPrice * 0.2).toFixed(2);
+
+  // 4. EFFETS (useEffect)
+  useEffect(() => { setIsCure(false); }, [watchServiceId]);
 
   useEffect(() => {
     fetch("/api/settings")
       .then(res => res.json())
       .then(data => setCancelRules(data))
-      .catch(() => {}); // En cas d'erreur, garde 24h et 20% par défaut
+      .catch(() => {});
   }, []);
-
-  const form = useForm<BookingFormData>({
-    resolver: zodResolver(BookingSchema),
-    defaultValues: { termsAccepted: true },
-  });
-
-  const watchServiceId = form.watch("serviceId");
-  const watchStartsAt = form.watch("startsAt");
-  const selectedService = services.find((s) => s.id === watchServiceId);
-
-  const finalPrice = selectedService 
-    ? appliedPromo?.discount 
-      ? selectedService.price - (selectedService.price * appliedPromo.discount / 100) 
-      : selectedService.price 
-    : 0;
-  
-  const penaltyAmount = (finalPrice * 0.2).toFixed(2);
 
   useEffect(() => {
     if (watchServiceId && selectedDate) {
@@ -118,7 +129,8 @@ const [appliedPromo, setAppliedPromo] = useState<{ code?: string, discount?: num
           paymentType: paymentChoice, 
           promoCode: appliedPromo?.code || null, // NOUVEAU : On envoie le texte, le serveur fera le calcul
           clientEmail: data.clientEmail,
-          clientName: data.clientName 
+          clientName: data.clientName,
+          isCure: isCure,
         }),
       });
       const json = await res.json();
@@ -144,7 +156,7 @@ const [appliedPromo, setAppliedPromo] = useState<{ code?: string, discount?: num
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, stripeIntentId: intentId, promoCodeUsed: appliedPromo?.code || null }),
+        body: JSON.stringify({ ...data, stripeIntentId: intentId, promoCodeUsed: appliedPromo?.code || null, isCure }),
       });
       const json = await res.json();
       if (json.success) setSuccess(true);
@@ -189,16 +201,43 @@ const [appliedPromo, setAppliedPromo] = useState<{ code?: string, discount?: num
               Le Rituel
             </h2>
             {step === 1 && (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-6">
                 {services.map((service) => (
-                  <label key={service.id} className={`cursor-pointer p-6 rounded-2xl flex justify-between items-center transition-all duration-300 ${watchServiceId === service.id ? 'bg-primary/5 border border-primary' : 'border border-border hover:border-primary/40'}`}>
-                    <input type="radio" value={service.id} {...form.register("serviceId")} className="hidden" />
-                    <div>
-                      <span className="block font-heading text-xl font-bold text-primary mb-1">{service.name}</span>
-                      <span className="text-sm text-primary/60 font-body uppercase tracking-wider">{service.durationMin} minutes</span>
-                    </div>
-                    <span className="font-heading text-2xl text-primary">{service.price} €</span>
-                  </label>
+                  <div key={service.id} className={`p-6 rounded-2xl border transition-all duration-300 ${watchServiceId === service.id ? 'bg-primary/5 border-primary' : 'border-border hover:border-primary/40'}`}>
+                    
+                    {/* Le bouton principal du soin */}
+                    <label className="flex justify-between items-center cursor-pointer">
+                      <input type="radio" value={service.id} {...form.register("serviceId")} className="hidden" />
+                      <div>
+                        <span className="block font-heading text-xl font-bold text-primary mb-1">{service.name}</span>
+                        <span className="text-sm text-primary/60 font-body uppercase tracking-wider">{service.durationMin} minutes</span>
+                      </div>
+                      <span className="font-heading text-2xl text-primary">{service.price} €</span>
+                    </label>
+
+                    {/* L'APPARITION MAGIQUE DES CURES : Si le soin a une cure, on affiche les options */}
+                    {watchServiceId === service.id && service.curePrice && (
+                      <div className="mt-6 pt-6 border-t border-primary/10 flex flex-col gap-3 animate-fade-in-up">
+                        <p className="text-xs font-bold text-primary/60 uppercase tracking-widest mb-1">Format de la séance</p>
+                        
+                        <label className={`cursor-pointer p-4 rounded-xl border flex items-center justify-between transition-all ${!isCure ? 'bg-white border-primary shadow-sm' : 'bg-transparent border-border hover:border-primary/30'}`}>
+                          <input type="radio" checked={!isCure} onChange={() => setIsCure(false)} className="mr-3 accent-primary w-4 h-4" />
+                          <span className="flex-1 font-bold text-sm text-primary">Soin à l'unité</span>
+                          <span className="font-heading font-bold text-primary">{service.price} €</span>
+                        </label>
+
+                        <label className={`cursor-pointer p-4 rounded-xl border flex items-center justify-between transition-all ${isCure ? 'bg-white border-secondary shadow-sm' : 'bg-transparent border-border hover:border-secondary/30'}`}>
+                          <input type="radio" checked={isCure} onChange={() => setIsCure(true)} className="mr-3 accent-secondary w-4 h-4" />
+                          <div>
+                            <span className="block font-bold text-sm text-primary">{service.cureName}</span>
+                            <span className="text-xs text-primary/60">{service.cureSessions} séances</span>
+                          </div>
+                          <span className="font-heading font-bold text-secondary text-lg">{service.curePrice} €</span>
+                        </label>
+                      </div>
+                    )}
+
+                  </div>
                 ))}
               </div>
             )}
@@ -384,7 +423,9 @@ const [appliedPromo, setAppliedPromo] = useState<{ code?: string, discount?: num
           <div className="space-y-6 font-heading text-lg text-[#FAFAF7]/90 mb-8">
             <div>
               <p className="text-sm uppercase tracking-widest text-secondary mb-1">Rituel</p>
-              <p className="font-bold">{selectedService?.name || "À définir"}</p>
+              <p className="font-bold">
+                {selectedService ? (isCure ? selectedService.cureName : selectedService.name) : "À finir"}
+              </p>
             </div>
             <div>
               <p className="text-sm uppercase tracking-widest text-secondary mb-1">Date</p>

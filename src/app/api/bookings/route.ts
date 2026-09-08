@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     
     // 1. Validation stricte
     const validatedData = BookingSchema.parse(body);
-    const { serviceId, startsAt, clientName, clientEmail, clientPhone, clientAddress, clientCity, clientZipCode, stripeIntentId, promoCodeUsed } = validatedData;    
+    const { serviceId, startsAt, clientName, clientEmail, clientPhone, clientAddress, clientCity, clientZipCode, stripeIntentId, promoCodeUsed, isCure } = validatedData;
     // --- NOUVEAU : VÉRIFICATION DE SÉCURITÉ STRIPE ---
     if (!stripeIntentId) {
       throw new Error("Transaction bancaire manquante ou invalide.");
@@ -89,7 +89,8 @@ export async function POST(request: Request) {
        userId: user.id,
        snapshotAddress: fullAddress,
        snapshotPhone: clientPhone,
-       promoCodeUsed: promoCodeUsed || null
+       promoCodeUsed: promoCodeUsed || null,
+       isCure: isCure || false
      }
    });
 

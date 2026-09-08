@@ -2,17 +2,20 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-08-26.dahlia", // Assure-toi que cette version correspond à celle de ton compte Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2026-08-26.dahlia",
 });
 
 export async function POST(request: Request) {
   try {
-    const { serviceId, paymentType, promoCode, clientEmail, clientName } = await request.json();
-
+    // 1. On récupère le choix isCure
+    const { serviceId, paymentType, promoCode, clientEmail, clientName, isCure } = await request.json();
+    
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) throw new Error("Service introuvable");
 
+    // 2. On définit le prix de base selon le choix
+    const basePrice = (isCure && service.curePrice) ? service.curePrice : service.price;
     let discountPercent = 0;
 
     // --- RECALCUL SÉCURISÉ DE LA RÉDUCTION CÔTÉ SERVEUR ---
@@ -41,7 +44,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const finalPrice = service.price - (service.price * discountPercent) / 100;
+    // 3. On calcule le prix final
+    const finalPrice = basePrice - (basePrice * discountPercent) / 100;
 
     // 1. Chercher si la cliente existe déjà sur Stripe, sinon la créer
     const customers = await stripe.customers.list({ email: clientEmail, limit: 1 });

@@ -65,7 +65,7 @@ export default async function Services() {
       img: "/images/page5-service3.webp"
     },
     {
-      keyword: "mesure", // Le mot clé reste "mesure" pour le lien avec la base
+      keyword: "combo", // Le mot clé reste "mesure" pour le lien avec la base
       anchor: "sur-mesure",
       title: "Soin Combo Grand Cru WADA",
       description: "La combinaison sur-mesure de deux rituels complets lors d'une même séance pour une prise en charge globale du corps (ex. 45 min Dos, Nuque & Migraines + 45 min Confort Pelvien ou 60 min Corps + 30 min Visage).",
