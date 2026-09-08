@@ -13,6 +13,7 @@ const NAV_LINKS = [
     href: "/#prestations",
     subLinks: [
       { name: "Décompression & Récupération", href: "/#decompression" },
+      { name: "Silhouette & Légèreté", href: "/#silhouette" },
       { name: "Féminité & Confort", href: "/#feminite" },
       { name: "Glow & Lift Facial", href: "/#glow-lift" },
       { name: "Sur-Mesure Haut de Gamme", href: "/#sur-mesure" }

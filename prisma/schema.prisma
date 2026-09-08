@@ -95,6 +95,10 @@ model Service {
   // Relations
   appointments Appointment[] // onDelete: Restrict (interdit de supprimer un service ayant des RDV)
   reviews      Review[]
+  
+  cureName     String?
+  curePrice    Int?
+  cureSessions Int?
 }
 
 enum AppointmentStatus {
@@ -134,6 +138,8 @@ model Appointment {
   @@index([startsAt, endsAt])
   @@index([status])
   promoCodeUsed   String?
+  
+  isCure       Boolean  @default(false)
 }
 
 // ==========================================

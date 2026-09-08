@@ -29,7 +29,6 @@ export default function ClientConfirmationEmail({ appointment, service }: EmailP
             <Text style={cardText}><strong>Lieu :</strong> {appointment.clientAddress}</Text>
           </Section>
 
-          {/* LA RÈGLE D'ANNULATION CLAIREMENT ÉCRITE */}
           {/* LA RÈGLE D'ANNULATION DYNAMIQUE */}
           <Section style={warningCard}>
             <Text style={warningText}>
