@@ -445,13 +445,13 @@ export default function BookingForm({ services }: { services: any[] }) {
           <div className="mt-8 pt-6 border-t border-[#FAFAF7]/20 flex justify-between items-end">
             <span className="font-heading text-xl uppercase tracking-widest">Total</span>
             <div className="text-right">
-              {appliedPromo?.discount && selectedService?.price ? (
+              {appliedPromo?.discount && basePrice ? (
                 <>
-                  <span className="text-lg text-white/50 line-through mr-2">{selectedService.price} €</span>
+                  <span className="text-lg text-white/50 line-through mr-2">{basePrice} €</span>
                   <span className="font-heading text-3xl font-bold text-secondary">{finalPrice} €</span>
                 </>
               ) : (
-                <span className="font-heading text-3xl font-bold">{selectedService?.price ? `${selectedService.price} €` : "--"}</span>
+                <span className="font-heading text-3xl font-bold">{basePrice ? `${basePrice} €` : "--"}</span>
               )}
             </div>
           </div>
