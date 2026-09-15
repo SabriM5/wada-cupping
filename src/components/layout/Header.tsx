@@ -9,7 +9,7 @@ import { Menu, X, Gift, ChevronDown, User } from "lucide-react";
 const NAV_LINKS = [
   { name: "L'Expérience", href: "/#a-propos" },
   { 
-    name: "Nos Rituels", 
+    name: "Rituels", 
     href: "/#prestations",
     subLinks: [
       { name: "Décompression & Récupération", href: "/#decompression" },
@@ -19,10 +19,8 @@ const NAV_LINKS = [
       { name: "Sur-Mesure Haut de Gamme", href: "/#sur-mesure" }
     ]
   },
-  { name: "Bons Cadeaux", href: "/offrir" }, 
-  { name: "Entreprises", href: "/#entreprises" },
-  { name: "Philosophie", href: "/#philosophie" },
-  { name: "F.A.Q.", href: "/#faq" },
+  { name: "Offrir", href: "/offrir" },
+  { name: "Entreprises", href: "/#entreprises" }
 ];
 
 export default function Header() {
