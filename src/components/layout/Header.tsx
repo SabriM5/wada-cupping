@@ -19,6 +19,8 @@ const NAV_LINKS = [
       { name: "Sur-Mesure Haut de Gamme", href: "/#sur-mesure" }
     ]
   },
+  { name: "Bons Cadeaux", href: "/offrir" }, 
+  { name: "Entreprises", href: "/#entreprises" },
   { name: "Philosophie", href: "/#philosophie" },
   { name: "F.A.Q.", href: "/#faq" },
 ];

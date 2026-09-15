@@ -99,11 +99,11 @@ export default function BookingForm({ services }: { services: any[] }) {
     setPromoStatusMsg(null);
     if (!promoInput.trim()) return;
 
-    // On récupère l'email tapé dans le formulaire à l'étape 3
     const currentEmail = form.getValues("clientEmail"); 
+    const currentServiceId = form.getValues("serviceId"); 
 
     try {
-      const res = await fetch(`/api/promos/validate?code=${promoInput.trim()}&email=${encodeURIComponent(currentEmail || "")}`);
+      const res = await fetch(`/api/promos/validate?code=${promoInput.trim()}&email=${encodeURIComponent(currentEmail || "")}&serviceId=${currentServiceId}`);
       const json = await res.json();
       
       if (json.success) {
@@ -120,6 +120,13 @@ export default function BookingForm({ services }: { services: any[] }) {
   const handleProceedToPayment = async (data: BookingFormData) => {
     setIsSubmitting(true);
     setErrorMsg("");
+
+    if (finalPrice === 0 || appliedPromo?.type === "GIFTCARD") {
+      await finalizeBooking(); // On sauvegarde directement le RDV
+      setIsSubmitting(false);
+      return; // On arrête la fonction ici, on ne va pas chez Stripe !
+    }
+
     try {
       const res = await fetch("/api/stripe/intent", {
         method: "POST",
@@ -174,8 +181,12 @@ export default function BookingForm({ services }: { services: any[] }) {
           <CheckCircle2 className="w-12 h-12 text-primary" />
         </div>
         <h2 className="text-4xl font-heading text-primary font-bold mb-6">Réservation confirmée</h2>
-        <p className="text-primary/70 font-heading text-lg mb-10 leading-relaxed">
-          La transaction a été validée avec succès. Votre rituel est confirmé et un e-mail récapitulatif vient de vous être envoyé.
+        <p className="text-primary/70 font-body text-lg mb-10 leading-relaxed">
+          La transaction a été validée avec succès. Votre rituel est confirmé et un e-mail récapitulatif vient de vous être envoyé.<br /><br />
+          <span className="block p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm">
+            <strong className="font-heading tracking-wider">Conseils avant votre séance :</strong><br />
+            Afin de profiter pleinement des bienfaits de votre rituel, nous vous conseillons de <strong>manger léger</strong> environ 2h avant le soin. Pensez également à préparer vos <strong>éventuels examens médicaux</strong> (bilan sanguin, IRM, radio...) si vous en possédez.
+          </span>
         </p>
         <button onClick={() => window.location.href = '/'} className="px-10 py-4 rounded-full font-body font-bold uppercase tracking-widest text-[#FAFAF7] bg-primary hover:bg-primary/90 transition-all duration-300">
           Retour à l'accueil

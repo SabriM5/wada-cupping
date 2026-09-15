@@ -99,6 +99,8 @@ model Service {
   cureName     String?
   curePrice    Int?
   cureSessions Int?
+
+  giftCards    GiftCard[]
 }
 
 enum AppointmentStatus {
@@ -236,4 +238,17 @@ model SystemSettings {
   
   cancellationNoticeHours    Int @default(24)
   cancellationPenaltyPercent Int @default(20)
+}
+
+model GiftCard {
+  id            String   @id @default(uuid())
+  code          String   @unique // Le code unique généré, ex: CADEAU-X7B9
+  serviceId     String   // L'ID du service offert (pour savoir à quoi il a droit)
+  service       Service  @relation(fields: [serviceId], references: [id])
+  buyerEmail    String   // L'email de la personne qui a payé
+  recipientName String?  // Le nom de la personne à qui on l'offre
+  message       String?  // Un petit mot d'accompagnement (optionnel)
+  isUsed        Boolean  @default(false) // Sécurité : passe à true après utilisation
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime // Date d'expiration (ex: valable 6 mois ou 1 an)
 }

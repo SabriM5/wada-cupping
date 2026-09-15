@@ -36,13 +36,17 @@ export default function ClientConfirmationEmail({ appointment, service }: EmailP
             </Text>
           </Section>
 
+          {/* NOUVELLE SECTION CONSEILS */}
           <Text style={text}>
-            <strong>Avant la séance :</strong><br/>
-            Il est recommandé d'avoir pris un repas léger 2h à 3h avant et de préparer un espace calme.
+            <strong>Avant la séance :</strong><br/><br/>
+            • <strong>Alimentation :</strong> Il est conseillé de manger léger environ 2 heures avant votre soin.<br/>
+            • <strong>Dossier médical :</strong> Si vous possédez des examens médicaux récents (bilan sanguin, imagerie, compte-rendu...), merci de les préparer pour votre séance afin d'adapter le rituel à vos besoins.<br/>
+            • <strong>Installation :</strong> Pensez à préparer un espace calme et chauffé pour votre moment de détente.
           </Text>
+
           <Text style={text}>À très bientôt,<br/><strong>Amira</strong></Text>
           <Hr style={hrFooter} />
-          <Text style={footer}>Ceci est un email automatique. Pour annuler votre rendez-vous, connectez-vous à votre Espace Client.</Text>
+          <Text style={footer}>Ceci est un email automatique. Pour annuler ou reporter votre rendez-vous, connectez-vous à votre Espace Client.</Text>
         </Container>
       </Body>
     </Html>

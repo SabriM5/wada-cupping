@@ -9,6 +9,7 @@ import FaqAccordion from "@/components/features/FaqAccordion";
 import CallToAction from "@/components/home/CallToAction";
 import ServiceArea from "@/components/home/ServiceArea";
 import Privileges from "@/components/home/Privileges"; // <-- Oubli corrigé
+import Corporate from "@/components/home/Corporate";
 
 export const metadata: Metadata = {
   title: "Cupping Therapy à domicile | Bien-être & Détente",
@@ -23,6 +24,7 @@ export default function HomePage() {
       <VideoBanner />
       <About />
       <Services />
+      <Corporate />
       <Process />
       
       {/* FAQ avec layout asymétrique type Éditorial */}

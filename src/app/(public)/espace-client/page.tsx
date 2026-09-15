@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Award, Gift, Calendar as CalIcon, Tag, Copy } from "lucide-react";
+import { Award, Gift, Calendar as CalIcon, Tag } from "lucide-react";
 import ClientCancelButton from "@/components/client/ClientCancelButton";
 import { revalidatePath } from "next/cache";
 import { sendCancellation } from "@/lib/mailer";
@@ -17,7 +17,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export default async function ClientDashboard() {
   const session = await auth();
-  
   if (!session) {
     redirect("/connexion");
   }
@@ -39,8 +38,15 @@ export default async function ClientDashboard() {
 
   const settings = await prisma.systemSettings.findUnique({ where: { id: "global" } });
   const promos = await prisma.promoCode.findMany({ where: { isActive: true } });
-  
+
+  // --- NOUVEAU : Récupération des bons cadeaux achetés par ce client ---
+  const myGiftCards = await prisma.giftCard.findMany({
+    where: { buyerEmail: session.user.email || "" },
+    orderBy: { createdAt: "desc" }
+  });
+
   const profile = user?.customerProfile;
+
   if (!profile) return <div className="pt-40 text-center">Profil introuvable.</div>;
 
   const progress = Math.min((profile.visitsCount / (settings?.loyaltyVisitsRequired || 5)) * 100, 100);
@@ -64,6 +70,7 @@ export default async function ClientDashboard() {
             <h2 className="font-heading text-2xl font-bold text-primary mb-6 flex items-center relative z-10">
               <Award className="w-6 h-6 mr-3 text-secondary" /> Votre Fidélité
             </h2>
+
             <div className="mb-4 flex justify-between font-body text-sm font-bold text-primary/70 relative z-10">
               <span>{profile.visitsCount} Soin(s)</span>
               <span>Objectif : {settings?.loyaltyVisitsRequired}</span>
@@ -78,7 +85,6 @@ export default async function ClientDashboard() {
                   <p className="text-xs text-secondary mb-2 uppercase tracking-widest font-bold text-center">Félicitations !</p>
                   <p className="font-body text-sm text-primary/80 mb-3 text-center">Utilisez ce code lors de votre réservation :</p>
                   
-                  {/* Le code avec le même style que le parrainage et le bouton copier */}
                   <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 flex justify-between items-center">
                     <span className="font-heading text-xl font-bold tracking-widest text-primary">
                       FIDELITE
@@ -94,7 +100,7 @@ export default async function ClientDashboard() {
             </div>
           </div>
 
-          {/* Carte 2 : Parrainage (CORRIGÉE) */}
+          {/* Carte 2 : Parrainage */}
           <div className="bg-white p-8 rounded-[30px] border border-primary/10 shadow-sm relative overflow-hidden flex flex-col">
             <div className="absolute top-0 right-0 p-6 opacity-5"><Gift className="w-24 h-24" /></div>
             <h2 className="font-heading text-2xl font-bold text-primary mb-4 flex items-center relative z-10">
@@ -111,7 +117,7 @@ export default async function ClientDashboard() {
             </div>
           </div>
 
-          {/* Carte 3 : Promotions Actives (CORRIGÉE) */}
+          {/* Carte 3 : Promotions Actives */}
           <div className="bg-white p-8 rounded-[30px] border border-primary/10 shadow-sm relative overflow-hidden flex flex-col">
             <div className="absolute top-0 right-0 p-6 opacity-5"><Tag className="w-24 h-24" /></div>
             <h2 className="font-heading text-2xl font-bold text-primary mb-6 flex items-center relative z-10">
@@ -134,9 +140,8 @@ export default async function ClientDashboard() {
               )}
             </div>
           </div>
-
         </div>
-        
+
         {/* Historique des rendez-vous */}
         <h2 className="font-heading text-3xl font-bold text-primary mb-8 border-b border-primary/10 pb-4">Vos Rituels</h2>
         
@@ -164,7 +169,7 @@ export default async function ClientDashboard() {
               // Message de Pop-up intelligent
               const cancelMessage = isWithinDeadline
                 ? `⚠️ ATTENTION : Vous annulez à moins de ${cancelHours}h du soin.\n\nConformément aux CGV, une pénalité de ${cancelPenalty}% sera appliquée (retenue sur votre paiement initial ou prélevée sur votre carte de garantie).\n\nConfirmer l'annulation ?`
-                : `Êtes-vous sûr de vouloir annuler ce rituel ?\n\nVous annulez à plus de ${cancelHours}h : aucun frais ne sera appliqué. Si vous aviez réglé en ligne, vous serez intégralement remboursé.\n\nConfirmer l'annulation ?`;
+                : `Êtes-vous sûr de vouloir annuler ce rituel ?\n\nVous annulez à plus de ${cancelHours}h : aucun frais ne sera appliqué. Si vous aviez réglé en ligne, vous serez intégralement remboursée.\n\nConfirmer l'annulation ?`;
 
               return (
                 <div key={appt.id} className={`p-6 flex flex-col md:flex-row justify-between items-start md:items-center ${idx !== user.appointments.length - 1 ? 'border-b border-border' : ''}`}>
@@ -233,8 +238,8 @@ export default async function ClientDashboard() {
                           
                           if (canceledAppt.user?.email) {
                             await sendCancellation(
-                              { clientEmail: canceledAppt.user.email, clientName: canceledAppt.user.customerProfile?.firstName || "Client" }, 
-                              canceledAppt.service, 
+                              { clientEmail: canceledAppt.user.email, clientName: canceledAppt.user.customerProfile?.firstName || "Client" },
+                              canceledAppt.service,
                               "CLIENT"
                             );
                           }
@@ -252,6 +257,49 @@ export default async function ClientDashboard() {
             })}
           </div>
         )}
+
+        {/* --- NOUVELLE SECTION : MES BONS CADEAUX --- */}
+        {myGiftCards.length > 0 && (
+          <div className="mt-16 mb-8">
+            <h2 className="font-heading text-3xl font-bold text-primary mb-8 border-b border-primary/10 pb-4">Bons Cadeaux Offerts</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {myGiftCards.map((card) => (
+                <div key={card.id} className="p-6 rounded-[30px] bg-white border border-primary/10 shadow-sm relative overflow-hidden group">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-sm font-bold text-primary/60 uppercase tracking-widest mb-1">
+                        Pour {card.recipientName || "Un proche"}
+                      </p>
+                      <p className="font-heading text-2xl font-bold text-primary">
+                        {card.code}
+                      </p>
+                    </div>
+                    {card.isUsed ? (
+                      <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-full">
+                        Utilisé
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-secondary/20 text-secondary text-xs font-bold uppercase tracking-wider rounded-full">
+                        Valide
+                      </span>
+                    )}
+                  </div>
+                  
+                  {card.message && (
+                    <p className="text-sm text-primary/70 italic bg-primary/5 p-4 rounded-xl">
+                      "{card.message}"
+                    </p>
+                  )}
+                  
+                  <p className="text-xs text-primary/40 mt-4 font-body uppercase tracking-wider">
+                    Expire le {new Date(card.expiresAt).toLocaleDateString("fr-FR")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

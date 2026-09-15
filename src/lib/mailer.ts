@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import ClientConfirmationEmail from '@/emails/ClientConfirmationEmail';
 import AdminNotificationEmail from '@/emails/AdminNotificationEmail';
 import CancellationEmail from '@/emails/CancellationEmail';
+import GiftCardEmail from '@/emails/GiftCardEmail';
 
 // Initialisation avec la clé API stockée dans le fichier .env
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -73,6 +74,24 @@ export async function sendReminderEmail(appointment: any, service: any) {
     });
     return { success: true };
   } catch (error) {
+    return { success: false, error };
+  }
+
+  
+}
+
+export async function sendGiftCardEmail(buyerEmail: string, giftData: any) {
+  try {
+    await resend.emails.send({
+      from: SENDER_EMAIL,
+      to: buyerEmail,
+      subject: 'Votre bon cadeau WADA Cupping Therapy',
+      replyTo: ADMIN_EMAIL,
+      react: GiftCardEmail(giftData),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur d'envoi email bon cadeau:", error);
     return { success: false, error };
   }
 }

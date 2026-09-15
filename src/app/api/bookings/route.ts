@@ -94,28 +94,37 @@ export async function POST(request: Request) {
      }
    });
 
-   // --- NOUVEAU : GESTION DES CAGNOTTES ---
-   if (promoCodeUsed) {
-     if (promoCodeUsed === "RECOMPENSE") {
-       // Le parrain utilise sa cagnotte : on lui retire 1 point
-       await tx.customerProfile.update({
-         where: { userId: user.id },
-         data: { referralRewards: { decrement: 1 } }
-       });
-     } else if (promoCodeUsed !== "FIDELITE" && promoCodeUsed !== "LANCEMENT" && promoCodeUsed !== "BIENVENUE") {
-       // C'est un code parrain (ex: AMIRA8X) : on cherche le parrain
-       const referrer = await tx.customerProfile.findFirst({
-         where: { referralCode: { startsWith: promoCodeUsed, mode: "insensitive" } }
-       });
-       // On crédite le parrain de 1 point (s'il ne s'auto-parraine pas)
-       if (referrer && referrer.userId !== user.id) {
-         await tx.customerProfile.update({
-           where: { id: referrer.id },
-           data: { referralRewards: { increment: 1 } }
-         });
-       }
-     }
-   }
+   // --- GESTION DES CAGNOTTES ET BONS CADEAUX ---
+      if (promoCodeUsed) {
+        if (promoCodeUsed === "RECOMPENSE") {
+          await tx.customerProfile.update({
+            where: { userId: user.id },
+            data: { referralRewards: { decrement: 1 } }
+          });
+        } else {
+          // On cherche si c'est un bon cadeau
+          const giftCard = await tx.giftCard.findUnique({ where: { code: promoCodeUsed } });
+          
+          if (giftCard) {
+            // C'est un bon cadeau : On le "brûle" (isUsed = true)
+            await tx.giftCard.update({
+              where: { id: giftCard.id },
+              data: { isUsed: true }
+            });
+          } else if (promoCodeUsed !== "FIDELITE" && promoCodeUsed !== "LANCEMENT" && promoCodeUsed !== "BIENVENUE") {
+            // C'est un code parrain
+            const referrer = await tx.customerProfile.findFirst({
+              where: { referralCode: { startsWith: promoCodeUsed, mode: "insensitive" } }
+            });
+            if (referrer && referrer.userId !== user.id) {
+              await tx.customerProfile.update({
+                where: { id: referrer.id },
+                data: { referralRewards: { increment: 1 } }
+              });
+            }
+          }
+        }
+      }
 
    return appointment;
 });

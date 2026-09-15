@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { 
   LayoutDashboard, Calendar, Users, ListOrdered, 
-  Clock, Star, Settings, LogOut, Tag, Award 
+  Clock, Star, Settings, LogOut, Tag, Award, Gift
 } from "lucide-react";
 // 1. Importation de la fonction de déconnexion de NextAuth
 import { signOut } from "@/auth"; 
@@ -12,6 +12,7 @@ const ADMIN_LINKS = [
   { name: "Disponibilités", href: "/admin/disponibilites", icon: Clock },
   { name: "Clients & Fidélité", href: "/admin/clients", icon: Award },
   { name: "Promotions", href: "/admin/promotions", icon: Tag },
+  { name: "Bons Cadeaux", href: "/admin/cadeaux", icon: Gift }, // <-- NOUVELLE LIGNE
   { name: "Prestations", href: "/admin/prestations", icon: Star },
   { name: "Paramètres", href: "/admin/parametres", icon: Settings },
 ];

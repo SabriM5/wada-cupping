@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code")?.toUpperCase();
   const email = searchParams.get("email");
+  const serviceId = searchParams.get("serviceId");
 
   if (!code) return NextResponse.json({ success: false, error: "Code manquant" });
 
@@ -80,6 +81,36 @@ export async function GET(request: Request) {
       const matchReferral = settings?.referralRewardReferred?.match(/\d+/);
       const refDiscount = matchReferral ? parseInt(matchReferral[0]) : 10;
       return NextResponse.json({ success: true, type: "REFERRAL", discount: refDiscount, referrerId: referrer.id, message: `Parrainage validé ! (-${refDiscount}€)` });
+    }
+
+    // --- 5. LOGIQUE BON CADEAU ---
+    const giftCard = await prisma.giftCard.findUnique({ 
+      where: { code },
+      include: { service: true } 
+    });
+
+    if (giftCard) {
+      if (giftCard.isUsed) {
+        return NextResponse.json({ success: false, error: "Ce bon cadeau a déjà été utilisé." });
+      }
+      if (giftCard.expiresAt < new Date()) {
+        return NextResponse.json({ success: false, error: "Ce bon cadeau a expiré." });
+      }
+
+      // --- LE VERROU MAGIQUE ---
+      if (serviceId && giftCard.serviceId !== serviceId) {
+        return NextResponse.json({ 
+          success: false, 
+          error: `Attention, ce bon cadeau est valable uniquement pour le soin : ${giftCard.service?.name}` 
+        });
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        type: "GIFTCARD", 
+        discount: 100, 
+        message: "Bon cadeau valide ! (Soin 100% offert)" 
+      });
     }
 
     return NextResponse.json({ success: false, error: "Code introuvable." });

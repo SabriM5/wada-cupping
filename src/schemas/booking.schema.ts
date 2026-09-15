@@ -12,8 +12,8 @@ export const BookingSchema = z.object({
   termsAccepted: z.boolean().refine(val => val === true, {
     message: "Vous devez accepter les conditions pour la réservation",
   }),
-  stripeIntentId: z.string().optional(),
-  promoCodeUsed: z.string().optional(),
+  stripeIntentId: z.string().optional().nullable(),
+  promoCodeUsed: z.string().optional().nullable(),
   isCure: z.boolean().optional(),
 });
 
