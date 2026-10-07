@@ -54,7 +54,7 @@ export default async function Services() {
       keyword: "glow",
       anchor: "glow-lift",
       title: "Rituel Glow & Lift Facial",
-      description: "Un soin d'exception réalisé avec des mini-ventouses en verre médical de haute précision, combinant stimulation cutanée et drainage doux afin de :",
+      description: "Un soin d'exception réalisé avec des mini-ventouses en scillicone de haute précision, combinant stimulation cutanée et drainage doux afin de :",
       bullets: [
         "Activer la microcirculation et redonner un éclat immédiat au teint terne.",
         "Stimuler la production naturelle de collagène et d'élastine (effet repulpant & anti-âge).",
