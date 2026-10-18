@@ -1,12 +1,23 @@
 import { Metadata } from "next";
 import LoginForm from "@/components/auth/LoginForm";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Connexion | WADA",
   description: "Espace privé WADA.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // Si l'utilisateur est déjà connecté, on le propulse directement sur son espace !
+  const session = await auth();
+  if (session?.user) {
+    if (session.user.role === "ADMIN") {
+      redirect("/admin/calendrier");
+    }
+    redirect("/espace-client");
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center py-24 px-6 relative overflow-hidden">
       

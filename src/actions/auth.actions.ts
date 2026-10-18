@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { signIn } from "@/auth";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -54,5 +55,24 @@ export async function registerCustomer(formData: FormData) {
     return { success: true };
   } catch (error) {
     return { error: "Erreur lors de la validation. Vérifiez vos informations." };
+  }
+}
+
+export async function loginUser(formData: FormData) {
+  const email = (formData.get("email") as string || "").trim().toLowerCase();
+  const password = (formData.get("password") as string || "");
+
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+    return { success: true };
+  } catch (error: any) {
+    if (error?.digest?.startsWith("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
+      return { success: true };
+    }
+    return { error: "Identifiants incorrects. Veuillez vérifier votre e-mail et mot de passe." };
   }
 }

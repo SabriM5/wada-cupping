@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
+  trustHost: true, // <-- INDISPENSABLE POUR MOBILE & VERCEL
   session: { strategy: "jwt", maxAge: 24 * 60 * 60 }, // Expiration : 24h
   pages: { signIn: "/connexion" },
   providers: [], // Laissé vide ici exprès pour le Edge Runtime
