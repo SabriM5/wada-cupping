@@ -3,9 +3,13 @@ import { useState, useEffect } from "react";
 import { X, Tag, Gift, Award, Sparkles } from "lucide-react";
 import Link from "next/link";
 import CopyToClipboard from "@/components/ui/CopyToClipboard";
+import { usePathname } from "next/navigation";
 
 export default function PromoPopup({ promos, settings }: any) {
   const [isOpen, setIsOpen] = useState(false);
+  
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
 
   useEffect(() => {
     const hasSeenPopup = sessionStorage.getItem("wada_popup_seen");

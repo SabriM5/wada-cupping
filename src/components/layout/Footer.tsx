@@ -1,7 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
+    // ... le reste de ton Footer reste identique ...
     <footer className="bg-[#FAFAF7] text-primary pt-20 pb-10 border-t border-primary/10">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
         

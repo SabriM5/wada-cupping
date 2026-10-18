@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation"; // <-- 1. AJOUT DE L'IMPORT
 import { Menu, X, Gift, ChevronDown, User } from "lucide-react";
 
-// Création d'une structure de menu avec sous-liens
 const NAV_LINKS = [
   { name: "L'Expérience", href: "/#a-propos" },
   { 
@@ -24,6 +24,7 @@ const NAV_LINKS = [
 ];
 
 export default function Header() {
+  const pathname = usePathname(); // <-- 2. RÉCUPÉRATION DE L'URL ACTUELLE
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -33,11 +34,16 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   const openOffers = () => {
     window.dispatchEvent(new Event("openOffers"));
   };
 
   return (
+    // ... garde tout le reste de ton code <header> exactement pareil ...
     <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? "bg-[#FAFAF7]/95 backdrop-blur-md border-b border-primary/10 py-4 shadow-sm" : "bg-transparent py-6"}`}>
       <div className="max-w-[1300px] mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center">

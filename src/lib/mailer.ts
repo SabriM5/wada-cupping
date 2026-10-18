@@ -31,9 +31,10 @@ export async function sendClientConfirmation(appointment: any, service: any) {
 export async function sendAdminNotification(appointment: any, service: any) {
   try {
     await resend.emails.send({
-      from: 'Système de Réservation <system@tondomaine.fr>',
+      from: SENDER_EMAIL, 
       to: ADMIN_EMAIL,
-      subject: `Nouveau Rendez-vous : ${service.name} - ${appointment.clientName}`,
+      replyTo: appointment.clientEmail, 
+      subject: `🔔 Nouveau RDV : ${service.name} - ${appointment.clientName}`,
       react: AdminNotificationEmail({ appointment, service }),
     });
     return { success: true };

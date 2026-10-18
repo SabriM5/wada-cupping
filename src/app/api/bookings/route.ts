@@ -128,14 +128,15 @@ export async function POST(request: Request) {
    return appointment;
 });
 
-    // 3. Envoi des Emails en arrière-plan (ne bloque pas la réponse)
     // 3. Envoi des Emails en arrière-plan
     try {
       const settings = await prisma.systemSettings.findUnique({ where: { id: "global" } });
       const emailData = { 
         startsAt, 
         clientName, 
-        clientEmail, 
+        clientEmail,
+        clientPhone,
+        isCure,
         clientAddress: fullAddress,
         cancelHours: settings?.cancellationNoticeHours || 24,
         cancelPenalty: settings?.cancellationPenaltyPercent || 20
