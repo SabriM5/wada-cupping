@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/api/', '/espace-client/'], // Bloquer l'indexation des zones privées
+      disallow: ['/admin/', '/api/', '/espace-client/'], // Bloque l'indexation des zones privées
     },
-    sitemap: 'https://www.ton-domaine.fr/sitemap.xml',
+    sitemap: 'https://www.wada-cupping.fr/sitemap.xml',
   };
 }

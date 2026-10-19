@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import "@/app/globals.css"; // Contient @tailwind directives
 import PopupWrapper from "@/components/layout/PopupWrapper"; 
+import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 
 const playfair = Playfair_Display({ 
   subsets: ["latin"], 
@@ -15,31 +16,29 @@ const montserrat = Montserrat({
 });
 
 
-// Supprime l'ancienne ligne : export const metadataBase = ...
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.wada-cupping.fr'), // Ton vrai nom de domaine
-  
+  metadataBase: new URL('https://www.wada-cupping.fr'),
   title: {
-    default: 'Hijama & Cupping Therapy à Domicile | Sainte-Geneviève-des-Bois',
-    template: '%s | Cupping Therapy', 
+    default: 'Cupping Therapy à Domicile | WADA Sainte-Geneviève-des-Bois',
+    template: '%s | WADA Cupping',
   },
-  description: 'Séances de hijama (ventouses sèches et humides) à domicile sur Sainte-Geneviève-des-Bois et en Île-de-France. Détente, récupération et hygiène stricte.',
-  keywords: ['hijama à domicile', 'cupping therapy', 'ventouses', 'bien-être', 'récupération sportive', 'Sainte-Geneviève-des-Bois', 'Essonne'],
+  description: 'Séances de ventousothérapie sèche (Cupping Therapy) à domicile sur Sainte-Geneviève-des-Bois et en Île-de-France. Détente absolue, récupération et confort pelvien.',
+  keywords: ['cupping therapy à domicile', 'ventousothérapie sèche', 'ventouses', 'bien-être', 'récupération sportive', 'Sainte-Geneviève-des-Bois', 'Essonne'],
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Hijama & Cupping Therapy à Domicile',
-    description: 'Offrez-vous un moment de détente absolue sans quitter votre confort. Cupping therapy à domicile avec un protocole d\'hygiène rigoureux.',
-    url: 'https://www.ton-domaine.fr',
-    siteName: 'Cupping Therapy',
+    title: 'WADA | Cupping Therapy à Domicile',
+    description: 'L\'alliance du geste ancestral et du confort absolu. Prenez rendez-vous pour un rituel sur mesure à votre domicile.',
+    url: 'https://www.wada-cupping.fr', // <-- CORRIGÉ
+    siteName: 'WADA Cupping Therapy',
     images: [
       {
-        url: '/images/og-image.jpg', // Une image élégante tirée du Canva
+        url: '/images/page13-cta.webp', // Image plus esthétique pour le partage
         width: 1200,
         height: 630,
-        alt: 'Matériel de cupping therapy premium',
+        alt: 'Rituel WADA Cupping Therapy',
       },
     ],
     locale: 'fr_FR',
@@ -65,9 +64,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${playfair.variable} ${montserrat.variable}`} data-scroll-behavior="smooth">
-        <body className="font-body bg-background text-text antialiased min-h-screen flex flex-col">
+      <body className="font-body bg-background text-text antialiased min-h-screen flex flex-col">
+        <LocalBusinessSchema /> {/* <-- AJOUT POUR LE RÉFÉRENCEMENT LOCAL */}
         <Header />
-        <PopupWrapper /> {/* <-- LE POP-UP EST ICI (Il remplace AnnouncementBanner) */}
+        <PopupWrapper />
         <main className="flex-grow">
           {children}
         </main>
