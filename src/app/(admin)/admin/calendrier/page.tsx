@@ -42,7 +42,7 @@ async function updateAppointmentStatus(formData: FormData) {
 
   if (status === "CANCELLED" && updatedAppt.user?.email) {
     const profile = updatedAppt.user.customerProfile;
-    const emailData = { clientEmail: updatedAppt.user.email, clientName: profile?.firstName || "Client" };
+    const emailData = { clientEmail: updatedAppt.user.email, clientName: profile?.firstName || "Client", startsAt: updatedAppt.startsAt};
     await sendCancellation(emailData, updatedAppt.service, "ADMIN");
   }
 
@@ -142,7 +142,7 @@ async function cancelAndChargePenalty(formData: FormData) {
     await prisma.appointment.update({ where: { id }, data: { status: "CANCELLED" } });
     
     const profile = appointment.user.customerProfile;
-    const emailData = { clientEmail: appointment.user.email, clientName: profile?.firstName || "Client" };
+    const emailData = { clientEmail: appointment.user.email, clientName: profile?.firstName || "Client", startsAt: appointment.startsAt };
     await sendCancellation(emailData, appointment.service, "ADMIN");
   }
 

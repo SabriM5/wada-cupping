@@ -38,6 +38,7 @@ export default function AdminNotificationEmail({ appointment, service }: any) {
               <strong>Prestation :</strong> {service?.name} {appointment.isCure ? "(Format CURE)" : "(Séance à l'unité)"}
             </Text>
             <Text style={cardText}><strong>Date & Heure :</strong> {formattedDate} à {formattedTime}</Text>
+            <Text style={cardText}><strong>Paiement :</strong> {appointment.paymentMethod}</Text>
             <Text style={cardText}><strong>Adresse :</strong> {appointment.clientAddress}</Text>
             <Text style={cardText}><strong>Téléphone :</strong> {appointment.clientPhone || "Non renseigné"}</Text>
             <Text style={cardText}><strong>Email :</strong> {appointment.clientEmail}</Text>

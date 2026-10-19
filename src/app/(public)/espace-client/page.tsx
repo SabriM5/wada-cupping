@@ -238,7 +238,7 @@ export default async function ClientDashboard() {
                           
                           if (canceledAppt.user?.email) {
                             await sendCancellation(
-                              { clientEmail: canceledAppt.user.email, clientName: canceledAppt.user.customerProfile?.firstName || "Client" },
+                              { clientEmail: canceledAppt.user.email, clientName: canceledAppt.user.customerProfile?.firstName || "Client", startsAt: canceledAppt.startsAt},
                               canceledAppt.service,
                               "CLIENT"
                             );

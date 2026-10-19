@@ -131,12 +131,18 @@ export async function POST(request: Request) {
     // 3. Envoi des Emails en arrière-plan
     try {
       const settings = await prisma.systemSettings.findUnique({ where: { id: "global" } });
+      
+      const paymentMethod = stripeIntentId.startsWith('pi_') 
+        ? "💳 Paiement intégral en ligne" 
+        : "🤝 Empreinte (Paiement sur place en espèces)";
+
       const emailData = { 
         startsAt, 
         clientName, 
-        clientEmail,
+        clientEmail, 
         clientPhone,
         isCure,
+        paymentMethod, // <-- ON TRANSMET L'INFO ICI
         clientAddress: fullAddress,
         cancelHours: settings?.cancellationNoticeHours || 24,
         cancelPenalty: settings?.cancellationPenaltyPercent || 20
