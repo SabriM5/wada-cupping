@@ -18,7 +18,7 @@ export default function StripeCheckout({ onSuccess, type }: { onSuccess: () => v
     setError(null);
 
     // L'URL de retour inclut explicitement le paramètre de succès
-    const returnUrl = `${window.location.origin}/reservation?success=true`;
+    const returnUrl = `${window.location.origin}${window.location.pathname}?success=true`;
 
     const { error: submitError } = type === "payment"
       ? await stripe.confirmPayment({ elements, confirmParams: { return_url: returnUrl }, redirect: "if_required" })

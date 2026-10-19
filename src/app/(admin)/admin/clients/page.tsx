@@ -3,12 +3,15 @@ import { revalidatePath } from "next/cache";
 import { User, Phone, Mail, MapPin, Award, Plus, Minus, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { auth } from "@/auth";
 
 export const dynamic = 'force-dynamic';
 
 // --- ACTION SERVEUR : MISE À JOUR DE LA FIDÉLITÉ ---
 async function updateLoyalty(formData: FormData) {
   "use server";
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") throw new Error("Non autorisé");
   const profileId = formData.get("profileId") as string;
   const action = formData.get("action") as "increment" | "decrement";
 

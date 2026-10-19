@@ -7,9 +7,9 @@ import { redirect } from "next/navigation";
 import Stripe from "stripe";
 import CancelPenaltyButton from "@/components/admin/CancelPenaltyButton";
 import { sendCancellation, sendClientConfirmation } from "@/lib/mailer";
+import { auth } from "@/auth";
 
 export const dynamic = 'force-dynamic';
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-08-26.dahlia",
 });
@@ -31,6 +31,8 @@ function createParisDate(dateStr: string, timeStr: string) {
 
 async function updateAppointmentStatus(formData: FormData) {
   "use server";
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") throw new Error("Non autorisé");
   const id = formData.get("id") as string;
   const status = formData.get("status") as "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
@@ -52,6 +54,8 @@ async function updateAppointmentStatus(formData: FormData) {
 // --- NOUVELLE ACTION : DÉPLACER / REPROGRAMMER UN RDV ---
 async function rescheduleAppointment(formData: FormData) {
   "use server";
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") throw new Error("Non autorisé");
   const id = formData.get("id") as string;
   const newDate = formData.get("newDate") as string;
   const newTime = formData.get("newTime") as string;
@@ -97,6 +101,8 @@ async function rescheduleAppointment(formData: FormData) {
 
 async function cancelAndChargePenalty(formData: FormData) {
   "use server";
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") throw new Error("Non autorisé");
   const id = formData.get("id") as string;
   let warningMessage = "";
 

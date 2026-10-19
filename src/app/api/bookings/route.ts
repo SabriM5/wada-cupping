@@ -95,7 +95,14 @@ export async function POST(request: Request) {
 
    // --- GESTION DES CAGNOTTES ET BONS CADEAUX ---
       if (promoCodeUsed) {
-        if (promoCodeUsed === "RECOMPENSE") {
+        if (promoCodeUsed === "FIDELITE") {
+          const settings = await tx.systemSettings.findUnique({ where: { id: "global" } });
+          const requiredVisits = settings?.loyaltyVisitsRequired || 5;
+          await tx.customerProfile.update({
+            where: { userId: user.id },
+            data: { visitsCount: { decrement: requiredVisits } }
+          });
+        } else if (promoCodeUsed === "RECOMPENSE") {
           await tx.customerProfile.update({
             where: { userId: user.id },
             data: { referralRewards: { decrement: 1 } }

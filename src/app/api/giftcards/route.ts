@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { addYears } from "date-fns";
-import { sendGiftCardEmail } from "@/lib/mailer"; // <-- On importe la fonction d'envoi
+import { sendGiftCardEmail } from "@/lib/mailer"; 
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2026-08-26.dahlia" });
+
+
 
 function generateGiftCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -15,7 +20,14 @@ function generateGiftCode() {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    
+    // Dans POST :
+    if (!data.stripeIntentId || !data.stripeIntentId.startsWith("pi_")) {
+      return NextResponse.json({ success: false, error: "Paiement manquant" }, { status: 400 });
+    }
+    const intent = await stripe.paymentIntents.retrieve(data.stripeIntentId);
+    if (intent.status !== "succeeded") {
+      return NextResponse.json({ success: false, error: "Paiement non validé" }, { status: 400 });
+    }
     // 1. R cup ration du nom du service pour le mail
     const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
     

@@ -43,9 +43,15 @@ export default function BookingForm({ services }: { services: any[] }) {
   const [cancelRules, setCancelRules] = useState({ hours: 24, penalty: 20 });
 
   // 2. INITIALISATION DU FORMULAIRE
+  const preselectedServiceId = searchParams.get("service") || ""; // Lit l'URL si on a cliqué sur "Réserver" depuis un rituel
+
   const form = useForm<BookingFormData>({
     resolver: zodResolver(BookingSchema),
-    defaultValues: { termsAccepted: true, isCure: false },
+    defaultValues: { 
+      serviceId: preselectedServiceId, // <-- La magie opère ici
+      termsAccepted: true, 
+      isCure: false 
+    },
   });
 
   const watchServiceId = form.watch("serviceId");
@@ -58,8 +64,12 @@ export default function BookingForm({ services }: { services: any[] }) {
     ? (isCure && selectedService.curePrice ? selectedService.curePrice : selectedService.price) 
     : 0;
     
-  const finalPrice = basePrice 
-    ? (appliedPromo?.discount ? basePrice - (basePrice * appliedPromo.discount / 100) : basePrice) 
+  const finalPrice = basePrice
+    ? appliedPromo?.discount
+      ? (appliedPromo.type === "REWARD" || appliedPromo.type === "REFERRAL")
+        ? Math.max(0, basePrice - appliedPromo.discount) // Soustraction en Euros (Parrainage)
+        : basePrice - (basePrice * appliedPromo.discount / 100) // Pourcentage (Fidélité, Promo)
+      : basePrice
     : 0;
     
   const penaltyAmount = (finalPrice * 0.2).toFixed(2);

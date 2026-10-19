@@ -16,36 +16,38 @@ export async function POST(request: Request) {
 
     // 2. On définit le prix de base selon le choix
     const basePrice = (isCure && service.curePrice) ? service.curePrice : service.price;
-    let discountPercent = 0;
+    let finalPrice = basePrice;
 
-    // --- RECALCUL SÉCURISÉ DE LA RÉDUCTION CÔTÉ SERVEUR ---
+    // --- RECALCUL SÉCURISÉ CÔTÉ SERVEUR ---
     if (promoCode) {
       const settings = await prisma.systemSettings.findUnique({ where: { id: "global" } });
       
       if (promoCode === "FIDELITE") {
         const matchLoyalty = settings?.loyaltyRewardDesc?.match(/\d+/);
-        discountPercent = matchLoyalty ? parseInt(matchLoyalty[0]) : 50;
+        const discountVal = matchLoyalty ? parseInt(matchLoyalty[0]) : 50;
+        finalPrice = basePrice - (basePrice * discountVal) / 100; // Pourcentage
+        
       } else if (promoCode === "RECOMPENSE") {
         const matchReward = settings?.referralRewardReferrer?.match(/\d+/);
-        discountPercent = matchReward ? parseInt(matchReward[0]) : 10;
+        const rewardVal = matchReward ? parseInt(matchReward[0]) : 10;
+        finalPrice = Math.max(0, basePrice - rewardVal); // Euros
+        
       } else {
         const promo = await prisma.promoCode.findUnique({ where: { code: promoCode } });
         if (promo && promo.isActive) {
-          discountPercent = promo.discountPercent;
+          finalPrice = basePrice - (basePrice * promo.discountPercent) / 100; // Pourcentage
         } else {
           const referrer = await prisma.customerProfile.findFirst({
             where: { referralCode: { startsWith: promoCode, mode: "insensitive" } }
           });
           if (referrer) {
             const matchReferral = settings?.referralRewardReferred?.match(/\d+/);
-            discountPercent = matchReferral ? parseInt(matchReferral[0]) : 10;
+            const refDiscount = matchReferral ? parseInt(matchReferral[0]) : 10;
+            finalPrice = Math.max(0, basePrice - refDiscount); // Euros
           }
         }
       }
     }
-
-    // 3. On calcule le prix final
-    const finalPrice = basePrice - (basePrice * discountPercent) / 100;
 
     // 1. Chercher si la cliente existe déjà sur Stripe, sinon la créer
     const customers = await stripe.customers.list({ email: clientEmail, limit: 1 });

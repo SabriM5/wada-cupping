@@ -55,17 +55,18 @@ export default function GiftCardForm({ services }: { services: any[] }) {
 
   const finalizePurchase = async () => {
     try {
+      const intentId = clientSecret?.split('_secret_')[0]; // <-- AJOUT : On récupère l'ID Stripe
       const res = await fetch("/api/giftcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, stripeIntentId: intentId }), // <-- AJOUT
       });
       const json = await res.json();
       if (json.success) {
         setGeneratedCode(json.code);
         setStep(3);
       } else {
-        setErrorMsg("Erreur lors de la génération du code.");
+        setErrorMsg(json.error || "Erreur lors de la génération du code.");
       }
     } catch (err) {
       setErrorMsg("Serveur injoignable.");
